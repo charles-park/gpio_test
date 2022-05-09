@@ -70,7 +70,11 @@ void *tx_thread_func (void *arg)
     ptc_grp_t *ptc_grp = (ptc_grp_t *)arg;
 
     while(true) {
-        if (queue_get(&ptc_grp->dq, &d))   write (ptc_grp->fd, &d, 1);
+//        if (queue_get(&ptc_grp->dq, &d))   write (ptc_grp->fd, &d, 1);
+        if (queue_get(&ptc_grp->dq, &d))    {
+            write (ptc_grp->fd, &d, 1);
+            printf("%c", d);
+        }   
         usleep(50);
     }
 }

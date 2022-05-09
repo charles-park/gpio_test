@@ -210,8 +210,9 @@ void send_msg (ptc_grp_t *ptc_grp, void *s)
 {
 	char *p = (char *)s;
 	int i;
-	for (i = 0; i < sizeof(protocol_t); i++)
-		queue_put (&ptc_grp->dq, p + i);
+	for (i = 0; i < sizeof(protocol_t); i++) {
+		queue_put (&ptc_grp->dq, &p[i]);
+	}
 }
 
 //------------------------------------------------------------------------------
@@ -303,10 +304,10 @@ int wait_boot_cmd(ptc_grp_t *ptc_grp)
 //------------------------------------------------------------------------------
 int wait_for_ack (ptc_grp_t *ptc_grp)
 {
-	while (!ptc_grp->p[0].var.pass)
-		usleep(100);
 	ptc_grp->p[0].var.pass = false;
 	ptc_grp->p[0].var.open = true;
+	while (!ptc_grp->p[0].var.pass)
+		usleep(1000);
 }
 
 //------------------------------------------------------------------------------
@@ -342,6 +343,7 @@ int main(int argc, char **argv)
 	while (true) {
 		for (p_cnt = 0; p_cnt < ptc_grp->pcnt; p_cnt++) {
 			if (OPT_SERVER_MODE) {
+				sleep(1);
 				// send boot msg
 				for (i = 0; i < ARRARY_SIZE(CON1_TEST_GPIOS); i++) {
 					send_check_gpio(ptc_grp, gb[i].gpio, 1);
@@ -357,6 +359,8 @@ int main(int argc, char **argv)
 					protocol_t s;
 					protocol_t  *r = (protocol_t  *)ptc_grp->p[0].var.arg;
 					gpio_test_t	*g = (gpio_test_t *)r->data;
+					ptc_grp->p[0].var.pass = false;
+					ptc_grp->p[0].var.open = true;
 
 					// gpio ctrl
 					gpio_export (g->gpio);
@@ -377,8 +381,6 @@ int main(int argc, char **argv)
 					memcpy(s.msg, r->msg, sizeof(s.msg));
 					send_msg(ptc_grp, &s);
 
-					ptc_grp->p[0].var.pass = false;
-					ptc_grp->p[0].var.open = true;
 					info ("status = %c, gpio = %d, value = %d\n", s.status, g->gpio, g->value);
 				}
 				usleep(100);
